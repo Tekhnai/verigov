@@ -84,3 +84,4 @@ Web scraping/RPA (quando nao houver API):
 - Observabilidade (request_id + logs)
 - UI com estados vazios e toasts
 # verigov
+# verigov
