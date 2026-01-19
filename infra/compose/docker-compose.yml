@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: verigov
+      POSTGRES_USER: verigov
+      POSTGRES_PASSWORD: verigov
+    ports:
+      - "55432:5432"
+    volumes:
+      - verigov_db:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "56379:6379"
+
+  api:
+    build:
+      context: ../../apps/api
+    environment:
+      DATABASE_URL: postgresql+psycopg://verigov:verigov@db:5432/verigov
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: dev-secret-change
+      JWT_ACCESS_MINUTES: "15"
+      JWT_REFRESH_DAYS: "7"
+      CORS_ORIGINS: http://localhost:5173
+      USE_MOCK_CONNECTORS: "true"
+    ports:
+      - "8001:8000"
+    depends_on:
+      - db
+      - redis
+
+  web:
+    build:
+      context: ../../apps/web
+    environment:
+      VITE_API_URL: http://localhost:8001
+    ports:
+      - "5174:5173"
+    depends_on:
+      - api
+
+volumes:
+  verigov_db:
