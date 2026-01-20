@@ -9,4 +9,6 @@ def build_summary(payload: dict) -> dict:
         "legal_name": payload.get("razao_social"),
         "document": payload.get("cnpj"),
         "snapshot_at": payload.get("consulta_em", datetime.now(timezone.utc).isoformat()),
+        "source": payload.get("source", "unknown"),
+        "details": payload.get("full_data", {}),
     }
