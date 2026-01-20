@@ -70,7 +70,7 @@ Web scraping/RPA (quando nao houver API):
 - `JWT_ACCESS_MINUTES`
 - `JWT_REFRESH_DAYS`
 - `CORS_ORIGINS` (ex: `http://localhost:5174`)
-- `USE_MOCK_CONNECTORS` (`true` ou `false`)
+- `USE_MOCK_CONNECTORS` (`true` ou `false`). Em producao, use `false` para consultar a API publica.
 - `AUTO_CREATE_TABLES` (`true` em dev)
 
 ## Variaveis de ambiente (Web)

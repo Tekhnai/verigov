@@ -27,9 +27,12 @@ services:
       JWT_ACCESS_MINUTES: "15"
       JWT_REFRESH_DAYS: "7"
       CORS_ORIGINS: http://localhost:5174
-      USE_MOCK_CONNECTORS: "true"
+      USE_MOCK_CONNECTORS: "false"
     ports:
       - "8001:8000"
+    volumes:
+      - ../../apps/api/app:/app/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     depends_on:
       - db
       - redis
