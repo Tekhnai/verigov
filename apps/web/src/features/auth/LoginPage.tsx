@@ -1,15 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 
 import { api } from "../../lib/api";
-import { setTokens } from "../../lib/auth";
+import { isAuthenticated, setTokens } from "../../lib/auth";
 
 const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8),
+  password: z.string().min(8).max(72),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -22,6 +22,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "register">("login");
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const loginForm = useForm<LoginForm>({
@@ -33,16 +34,32 @@ export default function LoginPage() {
   });
 
   const handleLogin = loginForm.handleSubmit(async (values) => {
-    const data = await api.login(values.email, values.password);
-    setTokens(data.access_token, data.refresh_token);
-    navigate("/dashboard");
+    setError(null);
+    try {
+      const data = await api.login(values.email, values.password);
+      setTokens(data.access_token, data.refresh_token);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao entrar");
+    }
   });
 
   const handleRegister = registerForm.handleSubmit(async (values) => {
-    const data = await api.register(values.email, values.password, values.tenantName);
-    setTokens(data.access_token, data.refresh_token);
-    navigate("/dashboard");
+    setError(null);
+    try {
+      const data = await api.register(values.email, values.password, values.tenantName);
+      setTokens(data.access_token, data.refresh_token);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao registrar");
+    }
   });
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-ink via-slate to-steel text-cloud">
@@ -84,6 +101,11 @@ export default function LoginPage() {
           </div>
 
           <div className="rounded-3xl bg-white/5 p-8 shadow-xl backdrop-blur">
+            {error ? (
+              <div className="mb-4 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-xs text-red-200">
+                {error}
+              </div>
+            ) : null}
             {mode === "login" ? (
               <form onSubmit={handleLogin} className="space-y-4">
                 <h2 className="text-xl font-semibold text-white">Acesse sua conta</h2>
@@ -96,7 +118,7 @@ export default function LoginPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs uppercase text-cloud/60">Senha</label>
+                  <label className="text-xs uppercase text-cloud/60">Senha (8-72 caracteres)</label>
                   <input
                     className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white"
                     type="password"
@@ -106,6 +128,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   className="w-full rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-ink"
+                  disabled={loginForm.formState.isSubmitting}
                 >
                   Entrar
                 </button>
@@ -130,7 +153,7 @@ export default function LoginPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs uppercase text-cloud/60">Senha</label>
+                  <label className="text-xs uppercase text-cloud/60">Senha (8-72 caracteres)</label>
                   <input
                     className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white"
                     type="password"
@@ -140,6 +163,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   className="w-full rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-ink"
+                  disabled={registerForm.formState.isSubmitting}
                 >
                   Criar conta
                 </button>

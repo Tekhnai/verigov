@@ -36,9 +36,22 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ email, password, tenant_name: tenantName }),
     }),
-  listTargets: () => request<Array<{ id: number; document: string; name_hint?: string }>>("/targets"),
+  listTargets: () =>
+    request<
+      Array<{
+        id: number;
+        document: string;
+        name_hint?: string | null;
+        created_at?: string;
+      }>
+    >("/targets"),
   createTarget: (document: string, nameHint?: string) =>
-    request<{ id: number }>("/targets", {
+    request<{
+      id: number;
+      document: string;
+      name_hint?: string | null;
+      created_at?: string;
+    }>("/targets", {
       method: "POST",
       body: JSON.stringify({ document, name_hint: nameHint, type: "CNPJ" }),
     }),

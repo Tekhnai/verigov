@@ -26,7 +26,7 @@ services:
       JWT_SECRET: dev-secret-change
       JWT_ACCESS_MINUTES: "15"
       JWT_REFRESH_DAYS: "7"
-      CORS_ORIGINS: http://localhost:5173
+      CORS_ORIGINS: http://localhost:5174
       USE_MOCK_CONNECTORS: "true"
     ports:
       - "8001:8000"

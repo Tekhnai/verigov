@@ -11,6 +11,9 @@ LOG_DIR="${ROOT_DIR}/.logs"
 
 mkdir -p "${LOG_DIR}"
 
+pkill -f "uvicorn app.main:app" >/dev/null 2>&1 || true
+pkill -f "vite --host" >/dev/null 2>&1 || true
+
 if command -v docker >/dev/null 2>&1; then
   if ! docker ps --format '{{.Names}}' | grep -q '^verigov-db$'; then
     if docker ps -a --format '{{.Names}}' | grep -q '^verigov-db$'; then

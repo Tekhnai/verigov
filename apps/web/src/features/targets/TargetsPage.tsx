@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { api } from "../../lib/api";
 
 export default function TargetsPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [document, setDocument] = useState("");
   const [nameHint, setNameHint] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const targetsQuery = useQuery({
     queryKey: ["targets"],
@@ -16,10 +18,21 @@ export default function TargetsPage() {
 
   const createMutation = useMutation({
     mutationFn: () => api.createTarget(document, nameHint || undefined),
-    onSuccess: () => {
+    onSuccess: async (data) => {
+      setError(null);
       setDocument("");
       setNameHint("");
       queryClient.invalidateQueries({ queryKey: ["targets"] });
+      try {
+        await api.runCheck(data.id);
+        queryClient.invalidateQueries({ queryKey: ["reports", data.id] });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Falha ao gerar relatorio");
+      }
+      navigate(`/targets/${data.id}`);
+    },
+    onError: (err) => {
+      setError(err instanceof Error ? err.message : "Falha ao criar target");
     },
   });
 
@@ -37,6 +50,11 @@ export default function TargetsPage() {
 
       <section className="rounded-3xl bg-white/5 p-6">
         <h2 className="text-lg font-semibold text-white">Cadastrar novo CNPJ</h2>
+        {error ? (
+          <div className="mt-4 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-xs text-red-200">
+            {error}
+          </div>
+        ) : null}
         <div className="mt-4 grid gap-3 md:grid-cols-[1.2fr_1.2fr_0.6fr]">
           <input
             className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white"
@@ -55,7 +73,7 @@ export default function TargetsPage() {
             className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-ink"
             disabled={!document || createMutation.isPending}
           >
-            Criar
+            {createMutation.isPending ? "Processando..." : "Criar"}
           </button>
         </div>
       </section>
