@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     cors_origins: str = Field(default="", alias="CORS_ORIGINS")
     use_mock_connectors: bool = Field(default=True, alias="USE_MOCK_CONNECTORS")
     auto_create_tables: bool = Field(default=True, alias="AUTO_CREATE_TABLES")
+    cnpj_cache_ttl_seconds: int = Field(default=86400, alias="CNPJ_CACHE_TTL_SECONDS")
 
     def cors_origin_list(self) -> list[str]:
         if not self.cors_origins:
