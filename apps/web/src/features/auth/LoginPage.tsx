@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 
 import { api } from "../../lib/api";
-import { isAuthenticated, setTokens } from "../../lib/auth";
+import { clearTokens, isAuthenticated, setTokens } from "../../lib/auth";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -54,6 +54,11 @@ export default function LoginPage() {
       setError(err instanceof Error ? err.message : "Falha ao registrar");
     }
   });
+
+  const handleClearSession = () => {
+    clearTokens();
+    setError("Sessao limpa. Entre novamente.");
+  };
 
   useEffect(() => {
     if (isAuthenticated()) {
@@ -169,6 +174,13 @@ export default function LoginPage() {
                 </button>
               </form>
             )}
+            <button
+              type="button"
+              onClick={handleClearSession}
+              className="mt-4 w-full rounded-xl border border-white/20 px-4 py-2 text-xs uppercase tracking-wide text-cloud/70"
+            >
+              Limpar sessao
+            </button>
           </div>
         </div>
       </div>
