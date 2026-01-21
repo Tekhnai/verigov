@@ -34,6 +34,7 @@ infra/
 - Arquitetura: `docs/architecture.md`
 - API: `docs/api.md`
 - Tecnico: `docs/technical.md`
+- Ready-to-go (producao): `docs/ready-to-go.md`
 
 ## MVP atual (estado inicial)
 

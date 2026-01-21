@@ -28,6 +28,7 @@ services:
       JWT_REFRESH_DAYS: "7"
       CORS_ORIGINS: http://localhost:5174
       USE_MOCK_CONNECTORS: "false"
+      AUTO_CREATE_TABLES: "true"
     ports:
       - "8001:8000"
     volumes:

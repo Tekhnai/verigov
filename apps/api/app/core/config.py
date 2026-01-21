@@ -12,8 +12,11 @@ class Settings(BaseSettings):
     jwt_refresh_days: int = Field(default=7, alias="JWT_REFRESH_DAYS")
     cors_origins: str = Field(default="", alias="CORS_ORIGINS")
     use_mock_connectors: bool = Field(default=True, alias="USE_MOCK_CONNECTORS")
-    auto_create_tables: bool = Field(default=True, alias="AUTO_CREATE_TABLES")
+    auto_create_tables: bool = Field(default=False, alias="AUTO_CREATE_TABLES")
     cnpj_cache_ttl_seconds: int = Field(default=86400, alias="CNPJ_CACHE_TTL_SECONDS")
+    allow_mock_on_error: bool = Field(default=True, alias="ALLOW_MOCK_ON_ERROR")
+    async_checks_enabled: bool = Field(default=False, alias="ASYNC_CHECKS_ENABLED")
+    async_max_workers: int = Field(default=2, alias="ASYNC_MAX_WORKERS")
 
     def cors_origin_list(self) -> list[str]:
         if not self.cors_origins:

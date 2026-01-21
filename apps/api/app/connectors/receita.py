@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-import time
-
 import httpx
 import structlog
 import redis
+from redis.exceptions import RedisError
 import json
 
 from app.core.config import settings
@@ -48,9 +47,18 @@ def fetch_cnpj(cnpj: str, use_mock: bool = False) -> dict:
     redis_client = _get_redis()
     cache_key = f"cnpj:{cnpj_clean}"
     if redis_client:
-        cached = redis_client.get(cache_key)
+        try:
+            cached = redis_client.get(cache_key)
+        except RedisError as exc:
+            logger.warning("cnpj_cache_get_failed", cnpj=cnpj_clean, error=str(exc))
+            cached = None
+
         if cached:
             logger.info("cnpj_fetch_cache_hit", cnpj=cnpj_clean)
+            try:
+                redis_client.incr("metrics:cnpj_cache_hit")
+            except RedisError:
+                pass
             return json.loads(cached)
 
     if use_mock:
@@ -87,7 +95,9 @@ def fetch_cnpj(cnpj: str, use_mock: bool = False) -> dict:
             if redis_client:
                 try:
                     redis_client.setex(cache_key, CACHE_TTL_SECONDS, json.dumps(payload))
-                except Exception as exc:
+                    redis_client.incr("metrics:cnpj_cache_write")
+                    redis_client.incr("metrics:cnpj_fetch_success_publica")
+                except RedisError as exc:
                     logger.warning("cnpj_cache_set_failed", cnpj=cnpj_clean, error=str(exc))
             return payload
 
@@ -128,14 +138,71 @@ def fetch_cnpj(cnpj: str, use_mock: bool = False) -> dict:
             if redis_client:
                 try:
                     redis_client.setex(cache_key, CACHE_TTL_SECONDS, json.dumps(payload))
-                except Exception as exc:
+                    redis_client.incr("metrics:cnpj_cache_write")
+                    redis_client.incr("metrics:cnpj_fetch_success_brasilapi")
+                except RedisError as exc:
                     logger.warning("cnpj_cache_set_failed", cnpj=cnpj_clean, error=str(exc))
             return payload
 
     except Exception as fallback_exc:
-        logger.error(
+        logger.warning(
             "cnpj_fetch_fallback_failed",
             cnpj=cnpj_clean,
-            error=str(fallback_exc)
+            error=str(fallback_exc),
+            detail="Falling back to receitaws"
         )
-        raise fallback_exc
+
+    # Third attempt: receitaws (lenta, limitada)
+    try:
+        url = f"https://www.receitaws.com.br/v1/cnpj/{cnpj_clean}"
+        headers = {
+             "User-Agent": "VeriGov/1.0",
+             "Accept": "application/json",
+        }
+        timeout = httpx.Timeout(30.0, connect=10.0)
+        logger.info("cnpj_fetch_fallback_start", source="receitaws", cnpj=cnpj_clean)
+
+        with httpx.Client(timeout=timeout, headers=headers, follow_redirects=True) as client:
+            resp = client.get(url)
+            resp.raise_for_status()
+            data = resp.json()
+
+            payload = {
+                "cnpj": cnpj_clean,
+                "razao_social": data.get("nome"),
+                "situacao": data.get("situacao"),
+                "abertura": data.get("abertura"),
+                "consulta_em": datetime.now(timezone.utc).isoformat(),
+                "source": "receitaws",
+                "full_data": data,
+            }
+
+            if redis_client:
+                try:
+                    redis_client.setex(cache_key, CACHE_TTL_SECONDS, json.dumps(payload))
+                    redis_client.incr("metrics:cnpj_cache_write")
+                    redis_client.incr("metrics:cnpj_fetch_success_receitaws")
+                except RedisError as exc:
+                    logger.warning("cnpj_cache_set_failed", cnpj=cnpj_clean, error=str(exc))
+            return payload
+
+    except Exception as last_exc:
+        logger.error(
+            "cnpj_fetch_all_failed",
+            cnpj=cnpj_clean,
+            error=str(last_exc),
+        )
+
+        if settings.allow_mock_on_error:
+            logger.warning("cnpj_fetch_mock_fallback", cnpj=cnpj_clean)
+            payload = _mock_response(cnpj_clean)
+            if redis_client:
+                try:
+                    redis_client.setex(cache_key, CACHE_TTL_SECONDS, json.dumps(payload))
+                    redis_client.incr("metrics:cnpj_cache_write")
+                    redis_client.incr("metrics:cnpj_fetch_success_mock")
+                except RedisError as exc:
+                    logger.warning("cnpj_cache_set_failed", cnpj=cnpj_clean, error=str(exc))
+            return payload
+
+        raise last_exc

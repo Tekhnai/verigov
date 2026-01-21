@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routers import auth, health, reports, targets, users
+from app.api.routers import auth, health, jobs, reports, targets, users
 from app.core.config import settings
 from app.core.logging import configure_logging
 from app.core.middleware import RequestLogMiddleware
@@ -38,3 +38,4 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(targets.router)
 app.include_router(reports.router)
+app.include_router(jobs.router)
