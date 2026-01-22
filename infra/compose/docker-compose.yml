@@ -20,6 +20,8 @@ services:
   api:
     build:
       context: ../../apps/api
+    env_file:
+      - .env
     environment:
       DATABASE_URL: postgresql+psycopg://verigov:verigov@db:5432/verigov
       REDIS_URL: redis://redis:6379/0
@@ -29,6 +31,8 @@ services:
       CORS_ORIGINS: http://localhost:5174
       USE_MOCK_CONNECTORS: "false"
       AUTO_CREATE_TABLES: "true"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+      OTEL_RESOURCE_ATTRIBUTES: service.name=verigov-api
     ports:
       - "8001:8000"
     volumes:
@@ -47,6 +51,38 @@ services:
       - "5174:5173"
     depends_on:
       - api
+
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.53
+    ports:
+      - "16686:16686"   # UI
+      - "4317:4317"     # OTLP gRPC
+      - "4318:4318"     # OTLP HTTP
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
 
 volumes:
   verigov_db:

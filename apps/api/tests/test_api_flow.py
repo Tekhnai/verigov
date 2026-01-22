@@ -12,6 +12,8 @@ def test_healthz(client: TestClient):
     body = resp.json()
     assert "status" in body
     assert "db" in body and "redis" in body  # may be degraded if redis not reachable
+    # request id should be returned
+    assert "x-request-id" in resp.headers
 
 
 def test_auth_register_login_refresh(client: TestClient):
@@ -61,3 +63,9 @@ def test_target_check_and_report(client: TestClient, db_session: Session):
     assert resp_report.status_code == 200
     latest = resp_report.json()
     assert latest["summary_json"]["status"]
+
+
+def test_metrics_endpoint(client: TestClient):
+    resp = client.get("/metrics")
+    assert resp.status_code == 200
+    assert resp.text  # non-empty

@@ -4,6 +4,7 @@ import jwt
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 from app.core.security import decode_token
 from app.db.session import SessionLocal
@@ -16,7 +17,12 @@ def get_db() -> Session:
     db = SessionLocal()
     try:
         yield db
+        db.commit()
     finally:
+        try:
+            db.rollback()
+        except Exception:
+            pass
         db.close()
 
 
@@ -39,6 +45,10 @@ def get_current_user(
     if int(payload.get("tenant_id", -1)) != user.tenant_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid tenant context")
     request.state.tenant_id = user.tenant_id
+    try:
+        db.execute(text(f"SET LOCAL app.tenant_id = {int(user.tenant_id)}"))
+    except Exception:
+        db.rollback()
     return user
 
 

@@ -9,6 +9,7 @@ from app.schemas.targets import TargetCreate, TargetOut
 from app.services.check_service import run_cnpj_check
 from app.services.job_queue import enqueue_check_job
 from app.core.config import settings
+from app.services.audit_service import log_event
 
 router = APIRouter(prefix="/targets", tags=["targets"])
 
@@ -26,6 +27,7 @@ def create(
         name_hint=payload.name_hint,
         target_type=payload.type,
     )
+    log_event(db, current_user.tenant_id, current_user.id, "target_create", {"target_id": target.id})
     return target
 
 
@@ -50,7 +52,9 @@ def run_check(
 
     if async_mode and settings.async_checks_enabled:
         job_id = enqueue_check_job(current_user.tenant_id, target.id, target.document)
+        log_event(db, current_user.tenant_id, current_user.id, "check_enqueue", {"target_id": target.id})
         return {"status": "queued", "job_id": job_id}
 
     summary = run_cnpj_check(db, current_user.tenant_id, target.id, target.document)
+    log_event(db, current_user.tenant_id, current_user.id, "check_run", {"target_id": target.id, "status": summary.get("status")})
     return {"status": "ok", "summary": summary}

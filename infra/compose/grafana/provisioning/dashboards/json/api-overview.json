@@ -1,0 +1,105 @@
+{
+  "id": null,
+  "title": "VeriGov API Overview",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Total Requests (5m)",
+      "id": 1,
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total[5m]))",
+          "legendFormat": "req/s"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Logins (5m)",
+      "id": 5,
+      "gridPos": { "h": 6, "w": 4, "x": 8, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(logins_total{outcome=\"success\"}[5m]))",
+          "legendFormat": "logins/s"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Registros (5m)",
+      "id": 6,
+      "gridPos": { "h": 6, "w": 4, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(registrations_total{outcome=\"success\"}[5m]))",
+          "legendFormat": "regs/s"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Checks CNPJ (5m)",
+      "id": 7,
+      "gridPos": { "h": 6, "w": 4, "x": 16, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(cnpj_checks_total{outcome=\"success\"}[5m]))",
+          "legendFormat": "checks/s"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Requests by Status",
+      "id": 2,
+      "gridPos": { "h": 8, "w": 12, "x": 8, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (status_code) (rate(http_requests_total[5m]))",
+          "legendFormat": "{{status_code}}"
+        }
+      ],
+      "lines": true,
+      "linewidth": 2
+    },
+    {
+      "type": "graph",
+      "title": "Latency p50/p95 (seconds)",
+      "id": 3,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "p95"
+        }
+      ],
+      "lines": true,
+      "linewidth": 2
+    },
+    {
+      "type": "table",
+      "title": "Top Paths (req/s)",
+      "id": 4,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "targets": [
+        {
+          "expr": "topk(10, sum by (path) (rate(http_requests_total[5m])))",
+          "legendFormat": "{{path}}"
+        }
+      ],
+      "transformations": []
+    }
+  ],
+  "templating": { "list": [] },
+  "annotations": { "list": [] }
+}

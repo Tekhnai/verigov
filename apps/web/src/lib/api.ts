@@ -79,6 +79,7 @@ async function request<T>(path: string, options: RequestInit = {}, retry = true)
         return request<T>(path, options, false);
       }
       clearTokens();
+      window.dispatchEvent(new CustomEvent("session-expired"));
       window.location.href = "/login";
       throw new Error("Sessao expirada. Entre novamente.");
     }

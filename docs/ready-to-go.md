@@ -19,24 +19,25 @@ Panorama do que já foi feito e o que falta para ficar “pronto para vender” 
 - [x] Cache de CNPJ em Redis com TTL configurável, hits/writes contabilizados (`metrics:cnpj_*`) e fallback para mock se permitido.
 
 2) Observabilidade
-- [ ] Métricas (Prometheus + Grafana): latência/erro por provedor, acertos de cache, tempo de fila.
-- [ ] Tracing (OTel/Jaeger) e logs centralizados (ELK/CloudWatch equivalente OSS).
+- [~] Métricas (Prometheus + Grafana): exposto `/metrics` e dashboards provisionados (reqs, logins, registros, checks CNPJ), porém dashboards ainda não exibem dados — investigar scraping/ingest para finalizar.
+- [x] Tracing (OTel/Jaeger): Jaeger all-in-one no compose; OTEL instrumentação habilitada (FastAPI, psycopg2, Redis) exportando via OTLP para Jaeger.
 - [x] Healthchecks enriquecidos (dependências DB/Redis, readiness/liveness).
 
 3) Segurança e tenancy
-- [ ] Desligar `AUTO_CREATE_TABLES` em produção; somente Alembic.
-- [ ] RLS no Postgres (opcional, mas recomendado); rate limit por tenant/IP no ingress.
-- [ ] Segredos em secret manager; HTTPS/ingress; CORS estrito; headers de segurança.
-- [ ] Auditoria preenchida por evento (quem/que/onde) e UI de auditoria.
+- [x] Desligar `AUTO_CREATE_TABLES` em produção; somente Alembic (default off; dev mantém on via compose).
+- [~] Rate limit por IP e por tenant (Redis-backed com fallback in-memory) + headers de segurança; falta camada ingress/WAF.
+- [x] RLS no Postgres ativado para tabelas com `tenant_id`, com `app.tenant_id` setado por request; registro usa `SET LOCAL` para novo tenant.
+- [~] Segredos via env_file (compose) com `.env.example`; falta secret manager/HTTPS/ingress para produção e CORS whitelist por ambiente.
+- [~] Auditoria preenchida (criação de target, checks, login/register); falta UI e trilha completa.
 
 4) Qualidade e QA
-- [ ] Testes: unit (serviços), integração (auth/targets/reports), mock HTTP para conectores, e2e feliz (Playwright/Cypress).
-- [ ] CI (GitHub Actions): lint/test/build image; opcional scan de dependências/imagens.
-- [ ] Seeds/fixtures para demo; scripts de migração e rollback. *(seed básico criado para tenant demo/admin)*
+- [~] Testes: unit/integrados básicos (auth/targets/reports + conectores mock); faltam e2e (Playwright/Cypress) e maior cobertura.
+- [x] CI (GitHub Actions): pipeline backend (pytest com Postgres/Redis services) + frontend build (npm ci + build).
+- [~] Seeds/fixtures: seed básico (tenant demo/admin) pronto; falta fixtures adicionais e scripts de rollback.
 
 5) Frontend/UX
-- [ ] Toasts, skeleton/loading, estados vazios, mensagens de erro de conector visíveis.
-- [ ] Refresh token transparente já existe; adicionar aviso de sessão expirada.
+- [~] Toasts globais, skeleton/loading, estados vazios e mensagens de erro implementados (auth/targets/check); seguir refinando UX e cobrir demais flows.
+- [~] Refresh token transparente já existe; aviso de sessão expirada exibido; falta UX final de re-login automático/opt-in.
 - [ ] Opcional SSR/SEO (Next/Remix) se landing/indexação forem necessárias para marketing.
 
 6) Dados e monetização

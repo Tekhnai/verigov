@@ -3,9 +3,26 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 body {
   font-family: "IBM Plex Sans", ui-sans-serif, system-ui;
+  background-color: #05070d;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.05) 0, rgba(255, 255, 255, 0) 25%),
+    radial-gradient(circle at 80% 0%, rgba(255, 147, 41, 0.08) 0, rgba(255, 147, 41, 0) 30%),
+    radial-gradient(circle at 50% 100%, rgba(64, 165, 255, 0.08) 0, rgba(64, 165, 255, 0) 35%);
+}
+
+.glass-panel {
+  @apply rounded-3xl border border-white/10 bg-white/5 shadow-xl backdrop-blur;
+}
+
+.pill {
+  @apply rounded-full border border-white/10 px-4 py-2 text-xs uppercase tracking-wide;
+}
+
+.card-grid {
+  @apply grid gap-4 md:grid-cols-2 xl:grid-cols-3;
 }

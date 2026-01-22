@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     allow_mock_on_error: bool = Field(default=True, alias="ALLOW_MOCK_ON_ERROR")
     async_checks_enabled: bool = Field(default=False, alias="ASYNC_CHECKS_ENABLED")
     async_max_workers: int = Field(default=2, alias="ASYNC_MAX_WORKERS")
+    metrics_enabled: bool = Field(default=True, alias="METRICS_ENABLED")
+    rate_limit_per_minute: int = Field(default=120, alias="RATE_LIMIT_PER_MINUTE")
+    rate_limit_per_minute_tenant: int = Field(default=240, alias="RATE_LIMIT_PER_MINUTE_TENANT")
 
     def cors_origin_list(self) -> list[str]:
         if not self.cors_origins:
